@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fit Log - Sign In</title>
+<style>
+  :root{--primary:#16a34a;--dark:#14532d;--accent:#84cc16;--bg:#f1f5f9;--text:#0f172a;--muted:#64748b;--border:#cbd5e1;--error:#dc2626;--ok:#16a34a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#14532d,#16a34a 55%,#84cc16);padding:20px;color:var(--text)}
+  .card{background:#fff;width:100%;max-width:420px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden}
+  .head{text-align:center;padding:28px 24px 8px}
+  .logo{font-size:28px;font-weight:800;color:var(--dark)}
+  .logo span{color:var(--primary)}
+  .head p{color:var(--muted);font-size:14px;margin-top:4px}
+  .tabs{display:flex;margin:18px 24px 0;background:var(--bg);border-radius:10px;padding:4px}
+  .tab{flex:1;padding:10px;border:0;background:transparent;border-radius:8px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer}
+  .tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  form{padding:20px 24px 28px;display:none}
+  form.active{display:block}
+  label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+  .field{position:relative}
+  input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:.15s}
+  input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+  .toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);font-size:12px;cursor:pointer;font-weight:600}
+  .msg{margin-top:14px;padding:10px 12px;border-radius:8px;font-size:13px;display:none}
+  .msg.error{display:block;background:#fee2e2;color:var(--error)}
+  .msg.ok{display:block;background:#dcfce7;color:var(--ok)}
+  .btn{width:100%;margin-top:20px;padding:12px;border:0;border-radius:8px;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--dark)}
+  .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:var(--muted)}
+  .row label{margin:0;font-weight:400;display:flex;gap:6px;align-items:center}
+  .row input{width:auto}
+  .foot{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
+  .foot a{color:var(--primary);font-weight:600;cursor:pointer;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <div class="logo">🏋️ Fit <span>Log</span></div>
+    <p>Track your workouts. Reach your goals.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="login" type="button">Log In</button>
+    <button class="tab" data-tab="register" type="button">Register</button>
+  </div>
+
+  <!-- LOG IN -->
+  <form id="login" class="active" novalidate>
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email">
+    <label for="loginPass">Password</label>
+    <div class="field">
+      <input id="loginPass" type="password" placeholder="Enter your password" autocomplete="current-password">
+      <button class="toggle" type="button" data-target="loginPass">SHOW</button>
+    </div>
+    <div class="row"><label><input type="checkbox" id="remember"> Remember me</label></div>
+    <div id="loginMsg" class="msg"></div>
+    <button class="btn" type="submit">Log In</button>
+    <div class="foot">Don't have an account yet? <a data-tab="register">Register</a></div>
+  </form>
+
+  <!-- REGISTRATION -->
+  <form id="register" novalidate>
+    <label for="regName">Full Name</label>
+    <input id="regName" type="text" placeholder="Juan Dela Cruz" autocomplete="name">
+    <label for="regEmail">Email</label>
+    <input id="regEmail" type="email" placeholder="you@example.com" autocomplete="email">
+    <label for="regPass">Password</label>
+    <div class="field">
+      <input id="regPass" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+      <button class="toggle" type="button" data-target="regPass">SHOW</button>
+    </div>
+    <label for="regConfirm">Confirm Password</label>
+    <input id="regConfirm" type="password" placeholder="Re-enter your password" autocomplete="new-password">
+    <div id="regMsg" class="msg"></div>
+    <button class="btn" type="submit">Create Account</button>
+    <div class="foot">Already have an account? <a data-tab="login">Log in</a></div>
+  </form>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+async function post(url, body){
+  let res;
+  try{ res = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), credentials:"same-origin"}); }
+  catch{ throw new Error("Cannot reach the server. Is app.py running?"); }
+  let data = {};
+  try{ data = await res.json(); }catch{}
+  if(!res.ok) throw new Error(data.error || "Something went wrong (" + res.status + ").");
+  return data;
+}
+
+function showMsg(el, text, type){ el.textContent = text; el.className = "msg " + type; }
+function clearMsgs(){ ["loginMsg","regMsg"].forEach(i => { $(i).className = "msg"; $(i).textContent = ""; }); }
+
+function switchTab(name){
+  clearMsgs();
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll("form").forEach(f => f.classList.toggle("active", f.id === name));
+}
+document.querySelectorAll("[data-tab]").forEach(el => el.addEventListener("click", () => switchTab(el.dataset.tab)));
+
+document.querySelectorAll(".toggle").forEach(btn => btn.addEventListener("click", () => {
+  const input = $(btn.dataset.target), show = input.type === "password";
+  input.type = show ? "text" : "password";
+  btn.textContent = show ? "HIDE" : "SHOW";
+}));
+
+const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+// REGISTER -> POST /api/register
+$("register").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("regName").value.trim(), email = $("regEmail").value.trim().toLowerCase();
+  const pass = $("regPass").value, confirm = $("regConfirm").value, msg = $("regMsg");
+  const btn = e.target.querySelector(".btn");
+  if (!name) return showMsg(msg, "Please enter your full name.", "error");
+  if (!emailOk(email)) return showMsg(msg, "Invalid email format.", "error");
+  if (pass.length < 6) return showMsg(msg, "Password must be at least 6 characters.", "error");
+  if (pass !== confirm) return showMsg(msg, "Passwords do not match.", "error");
+  btn.disabled = true;
+  try{
+    await post("/api/register", { name, email, password: pass });
+    $("register").reset();
+    switchTab("login");
+    $("loginEmail").value = email;
+    showMsg($("loginMsg"), "Registration successful! You can now log in.", "ok");
+  }catch(err){ showMsg(msg, err.message, "error"); }
+  finally{ btn.disabled = false; }
+});
+
+// LOG IN -> POST /api/login (the server keeps the session cookie)
+$("login").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim().toLowerCase(), pass = $("loginPass").value, msg = $("loginMsg");
+  const btn = e.target.querySelector(".btn");
+  if (!emailOk(email) || !pass) return showMsg(msg, "Please enter your email and password.", "error");
+  btn.disabled = true;
+  try{
+    await post("/api/login", { email, password: pass, remember: $("remember").checked });
+    location.href = "/dashboard.html";
+  }catch(err){ showMsg(msg, err.message, "error"); btn.disabled = false; }
+});
+</script>
+</body>
+</html>
